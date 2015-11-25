@@ -1,0 +1,22 @@
+READ-HOST "Nome de usuario" | SET NUSUARIO
+READ-HOST "Informe o ALIAS" | SET USERALIAS
+#READ-HOST "Informe o MAILBOX de destino" | SET MAILBOXDEST
+$MAILBOXDEST="SERVIDORES"
+
+DSQUERY USER -NAME $NUSUARIO -UC | SET UNAME
+
+$FILTROASPAS=$UNAME.length
+$FILTROASPAS=$FILTROASPAS-2
+
+
+$UNAME = $UNAME.Substring(1,$FILTROASPAS)
+#$UNAME = $UNAME.Substring()
+
+#$UNAME = $UNAME.Replace(""" , "")
+
+#echo $NUSUARIO
+#echo ${UNAME}
+#echo $USERALIAS
+#echo $MAILBOXDEST
+
+Enable-Mailbox -Identity "${UNAME}" -Alias ${USERALIAS} -Database ${MAILBOXDEST}
