@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Script para replicação de arquivos
+#
+# Última edição em 04/08/2014 por Dyego M. Bezerra
+
+servRplOrigem="RsyncOrigem"
+
+replicar()
+{
+	base=$1
+	destino=$2
+	replLOCK="$(cat /var/run/replicador/$base.lck || echo 0)"
+	
+	if [ $replLOCK == 0 ]; then
+		echo "Executando replicação "$(date -R) > /var/log/replicador/$base.log
+		date +%H%M%j > /var/run/replicador/$base.lck
+		/usr/bin/rsync -rah --stats --del --bwlimit=10000 --exclude="*lost+found" --quiet $servRplOrigem::$base $destino --log-file=/var/log/replicador/$base.log 2>> /var/log/replicador/$base-erro.log
+		echo "Fim da replicação "$(date -R) >> /var/log/replicador/$base.log
+		rm -f /var/run/replicador/$base.lck
+	else
+		rsyncOldDia="$(echo $replLOCK | cut -c 5-)"
+		rsyncOldHora="$(echo $replLOCK | cut -c 1-2)"
+		agoraHora=$(date +%H)
+		hoje=$(date +%j)
+		difDias=$((hoje-rsyncOldDia))
+		if [ $difDias -le 1 ] ; then
+			[ $rsyncOldHora -ge 20 ] && exit 0
+			difHora=$((agoraHora-rsyncOldHora))
+			[ $difHora -le 4 ] && exit 0
+		fi
+	fi
+	
+	rm -f /var/run/replicador/$base.lck 2> /dev/null
+	# Caso o rsync ainda esteja em execução, será encerrado:
+	ps aux | grep -E [r]sync.+\:\:.+$base | awk 'BEGIN {RS="\n"}{print$2}' | xargs -i kill {}
+
+}
+
+replicar $*
