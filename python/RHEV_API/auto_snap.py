@@ -17,7 +17,7 @@ import xml.etree.ElementTree as etree
 
 servidor="localhost"
 portaHTTPS=443
-usuario="user@empresa.com"
+usuario="user@empresa.com
 senha="$enh@"
 textoSnapDesc="Snapshot realizado automaticamente por script via API."
 
@@ -118,15 +118,12 @@ def criarSnap(vmHref,snapDesc):
                 snapStatus=str(snapCriado.find('snapshot_status').text).upper()
                 contador+=1
                 if snapStatus != 'OK':
-                    print(datetime.datetime.strftime(\
-                            datetime.datetime.now(),'%H:%M.%S'),\
-                            '- aguardando término do snapshot.')
+                    print('aguardando término do snapshot.')
                     sleep(30)
                 if int(contador/2) > timeOut:
-                    print(datetime.datetime.strftime(\
-                            datetime.datetime.now(),'%H:%M.%S'),\
-                            '- TimeOut execido, favor verificar.')
-                    quit (10)
+                    print('TimeOut execido, favor verificar.')
+                    break
+                    #quit (10)
                 else:
                     print('Concluído')
                     break
@@ -165,13 +162,12 @@ def excluiSnapAnt(vmHref,numDias,descAutoSnap):
                         print(datetime.datetime.strftime(\
                             datetime.datetime.now(),'%H:%M.%S'),\
                             '- aguardando término da exclusão do snapshot.')
-                        sleep(60)
+                        sleep(30)
                         contador+=1
                         if int(contador/2) > timeOut:
-                            print(datetime.datetime.strftime(\
-                            datetime.datetime.now(),'%H:%M.%S'),\
-                            '- TimeOut execido, favor verificar.')
-                            quit (10)
+                            print('TimeOut execido, favor verificar.')
+                            break
+                            #quit (10)
                     except ConnectionError:
                         print("Snapshot",snap.get('id'),"não foi mais encontrado.")
                         break
