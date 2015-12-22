@@ -3,7 +3,7 @@
 # Nome do Script: auto_snap
 #
 # Autor: Dyego M. B. - dyegomb.wordpress.com
-# Data: 18/12/2015
+# Data: 22/12/2015
 #
 # Descrição: Script integrado com API do RHEV para automação
 #            de snapshots de VMs
@@ -11,7 +11,6 @@
 import http.client, ssl, sys, os, datetime
 from base64 import b64encode
 from time import sleep
-#from random import randint
 import xml.etree.ElementTree as etree
 
 ##------------------- Variáveis a serem definidas -----------------------
@@ -24,7 +23,7 @@ textoSnapDesc="Snapshot realizado automaticamente por script via API."
 
 ##------------------- Constantes -----------------------
 
-separador='='*15
+separador='='*25
 cred=usuario+":"+senha
 credenciais=b64encode(bytearray(cred,"utf-8")).decode("ascii")
 context=ssl.SSLContext(ssl.PROTOCOL_TLSv1)
@@ -159,7 +158,9 @@ def excluiSnapAnt(vmHref,numDias,descAutoSnap):
                 while True:
                     try:
                         snapDelete=api_get(snapHref)
-                        print('aguardando término da exclusão snapshot.')
+                        print(datetime.datetime.strftime(\
+                            datetime.datetime.now(),'%H:%M.%S'),\
+                            '- aguardando término da exclusão do snapshot.')
                         sleep(60)
                         contador+=1
                         if int(contador/2) > timeOut:
