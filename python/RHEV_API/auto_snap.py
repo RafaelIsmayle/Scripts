@@ -56,7 +56,8 @@ def api_get(url,tipoResp='xml',headers=headers):
         elif resposta.code == 404 or resposta.code == 401:
             raise ConnectionError(404)
         else:
-            print("ERRO: falha ao tentar conexão, código",resposta.code,", verifique a url:", url)
+            print("ERRO: falha ao tentar conexão, código",resposta.code,\
+                  ", verifique a url:", url)
             raise Exception(str(resposta.code))
             
         return resposta
@@ -82,7 +83,8 @@ def api_post(url,metodo='POST',corpo=None,respTipo="xml",headers=headers):
             
         return resposta
     except Exception as erro:
-        print("ERRO: falha ao tentar conexão, verifique o RHEV-M, credenciais e url:",url)
+        print("ERRO: falha ao tentar conexão, verifique o RHEV-M, credenciais\
+e url:",url)
         
 
 def buscaVM(nomeVM,xmlTree=False):
@@ -108,7 +110,8 @@ def criarSnap(vmHref,snapDesc):
     try:
         vmXML=api_get(vmHref)
         print('A realizar snapshot de',vmXML.find('name').text)
-        corpoDsc=str("<snapshot><description>"+snapDesc+"</description></snapshot>")
+        corpoDsc=str("<snapshot><description>"+snapDesc+"</description>\
+</snapshot>")
         snapPost=api_post(str(vmHref+'/snapshots'),corpo=corpoDsc)
         
         contador=0
@@ -155,7 +158,8 @@ def excluiSnapAnt(vmHref,numDias,descAutoSnap):
             deltaData=dataAgora-snapData
             snapHref=snap.get('href')
             if deltaData.days >= numDias:
-                print('Iniciando exclusão de snapshot antigo:',snapData.strftime("%Y-%m-%d"))
+                print('Iniciando exclusão de snapshot antigo:',\
+                      snapData.strftime("%Y-%m-%d"))
                 deleteSnap=api_post(snapHref,'DELETE')
                 #print(deleteSnap)
 
@@ -175,7 +179,8 @@ def excluiSnapAnt(vmHref,numDias,descAutoSnap):
                             break
                             #quit (10)
                     except ConnectionError:
-                        print("Snapshot",snap.get('id'),"não foi mais encontrado.")
+                        print("Snapshot",snap.get('id'),"não foi mais \
+encontrado.")
                         break
     except Exception as erro:
         raise RuntimeError(str(erro))
@@ -194,13 +199,17 @@ todo o cluster.",default=False, metavar="cluster")
 VMs definidas em arquivo.",default=False, metavar="arquivo")
     parser.add_option("-p","--persistencia", help="Dia a serem mantidos\
 os Snapshots anteriores.",default=False, metavar="dias")
+    parser.add_option("-n","--naodeletar", help="Informa para não tentar\
+realizar a exclusão de snapshots.",default=False,action="store_true")
 
     options = parser.parse_args()[0]
 
-    if not options.persistencia or (not options.file and not options.cluster) :
+    if (not options.persistencia and not options.naodeletar) or \
+            (not options.file and not options.cluster) :
         parser.print_help()
         parser.error("A quantidade de dias para persitência dos snapshots \
-deve ser informada (-p) e selecionada a origem das VMs (arquivo ou todas de um cluster).")
+deve ser informada (-p) e selecionada a origem das VMs (arquivo ou todas de\
+um cluster).")
         
     elif options.file:
         arquivo=open(options.file,'rb')
@@ -210,8 +219,8 @@ deve ser informada (-p) e selecionada a origem das VMs (arquivo ou todas de um c
             try:
                 vmDados=buscaVM(vmNome.decode())
                 if type(vmDados) != dict:
-                    textoErro = str("ERRO: Não foi possível realizar snapshot de "+\
-                              vmNome.decode()+"||"+vmDados)
+                    textoErro = str("ERRO: Não foi possível realizar snapshot\
+de "+vmNome.decode()+"||"+vmDados)
                     raise RuntimeError(textoErro)
             except Exception as erro1:
                 print(erro1)
@@ -220,7 +229,9 @@ deve ser informada (-p) e selecionada a origem das VMs (arquivo ou todas de um c
             print('Executando procedimentos para', vmNome.decode())
             
             criarSnap(vmDados['href'],textoSnapDesc)
-            excluiSnapAnt(vmDados['href'],int(options.persistencia),textoSnapDesc)
+            if not options.naodeletar:
+                excluiSnapAnt(vmDados['href'],int(options.persistencia),\
+                              textoSnapDesc)
         
     elif options.cluster:
         clustersXML=api_get('/api/clusters')
@@ -241,7 +252,9 @@ deve ser informada (-p) e selecionada a origem das VMs (arquivo ou todas de um c
                         vmNome=vm.find('name').text
                         print('Executando procedimentos para', vmNome)
                         criarSnap(vm.get('href'),textoSnapDesc)
-                        excluiSnapAnt(vm.get('href'),int(options.persistencia),textoSnapDesc)
+                        if not options.naodeletar:
+                            excluiSnapAnt(vm.get('href'),int(\
+                                options.persistencia),textoSnapDesc)
                         
     else:
         parser.print_help()
