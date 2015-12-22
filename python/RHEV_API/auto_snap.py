@@ -118,7 +118,9 @@ def criarSnap(vmHref,snapDesc):
                 snapStatus=str(snapCriado.find('snapshot_status').text).upper()
                 contador+=1
                 if snapStatus != 'OK':
-                    print('aguardando término do snapshot.')
+                    print(datetime.datetime.strftime(\
+                            datetime.datetime.now(),'%H:%M.%S'),\
+                            '- aguardando término do snapshot.')
                     sleep(30)
                 if int(contador/2) > timeOut:
                     print(datetime.datetime.strftime(\
@@ -166,7 +168,9 @@ def excluiSnapAnt(vmHref,numDias,descAutoSnap):
                         sleep(60)
                         contador+=1
                         if int(contador/2) > timeOut:
-                            print('TimeOut execido, favor verificar.')
+                            print(datetime.datetime.strftime(\
+                            datetime.datetime.now(),'%H:%M.%S'),\
+                            '- TimeOut execido, favor verificar.')
                             quit (10)
                     except ConnectionError:
                         print("Snapshot",snap.get('id'),"não foi mais encontrado.")
