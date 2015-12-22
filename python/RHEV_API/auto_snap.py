@@ -121,7 +121,9 @@ def criarSnap(vmHref,snapDesc):
                     print('aguardando término do snapshot.')
                     sleep(30)
                 if int(contador/2) > timeOut:
-                    print('TimeOut execido, favor verificar.')
+                    print(datetime.datetime.strftime(\
+                            datetime.datetime.now(),'%H:%M.%S'),\
+                            '- TimeOut execido, favor verificar.')
                     quit (10)
                 else:
                     print('Concluído')
