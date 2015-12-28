@@ -3,7 +3,7 @@
 # Nome do Script: auto_snap
 #
 # Autor: Dyego M. B. - dyegomb.wordpress.com
-# Data: 22/12/2015
+# Data: 28/12/2015
 #
 # Descrição: Script integrado com API do RHEV para automação
 #            de snapshots de VMs
@@ -213,6 +213,8 @@ um cluster).")
         
     elif options.file:
         arquivo=open(options.file,'rb')
+        print(separador*2)
+        print('Iniciando procedimentos em',datetime.datetime.now())
         for vmLinha in arquivo.readlines():
             print(separador)
             vmNome=vmLinha.strip(b'\n')
@@ -245,6 +247,8 @@ de "+vmNome.decode()+"||"+vmDados)
             quit(1)
         else:
             vmsXML=api_get('/api/vms')
+            print(separador*2)
+            print('Iniciando procedimentos em',datetime.datetime.now())
             for vm in vmsXML.findall('vm'):
                 for i in vm.iter('cluster'):
                     if i.get('id')==clusterID:
