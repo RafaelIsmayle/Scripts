@@ -1,2 +1,2 @@
 # scripts
-Scripts publicados
+Meus scripts públicos ;)
