@@ -124,7 +124,7 @@ def menuComparar():
     # verificar index?
     pass
 
-def acaoVarrer(dbCursor, localVarrer):
+def acaoVarrer(dbCursor, localVarrer, tbComputador):
     dbcursor = dbCursor
     listaMp3s = varrerDir(localVarrer)
     qntMp3s = len(listaMp3s)
