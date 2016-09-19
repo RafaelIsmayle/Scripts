@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-# Criado por Dyego (dyegomb.wordpress.com) 2016/09/19
+# Criado por Dyego (dyegomb.wordpress.com)
+# Teste
+#
 import os, taglib, pickle, sqlite3
 from hashlib import md5
 from datetime import datetime
 
+
 class DadosMp3(object):
-    '''Gera e coleta dados de arquivos mp3'''
+    """Gera e coleta dados de arquivos mp3"""
 
     def __init__(self, localMp3):
         self.localMp3 = os.path.abspath(localMp3)
@@ -26,13 +29,13 @@ class DadosMp3(object):
         self.bytes = os.path.getsize(self.localMp3)
 
     def __repr__(self):
-        '''Retorna informações do mp3 em JSON'''
-        data=str(self.dataAnalise[2])+"/"+str(self.dataAnalise[1])+"/"+str(self.dataAnalise[0])
+        """Retorna informações do mp3 em JSON"""
+        data = str(self.dataAnalise[2]) + "/" + str(self.dataAnalise[1]) + "/" + str(self.dataAnalise[0])
         jsonDados = str("[{'artista':'" + self.artista + "'}," +
                         "{'album':'" + self.album + "'}," +
                         "{'hash':'" + self.hash + "'}," +
-                        "{'bytes':'" + str(self.bytes) + "'},"+
-                        "{'data de analise':'"+data+"'}]")
+                        "{'bytes':'" + str(self.bytes) + "'}," +
+                        "{'data de analise':'" + data + "'}]")
         return str(jsonDados)
 
     def coletarDados(self, localMp3):
@@ -54,7 +57,8 @@ class DadosMp3(object):
         except Exception:
             pass
 
-    def geraHash(self, localMp3):
+    @staticmethod
+    def geraHash(localMp3):
         try:
             calculador = md5()
             with open(localMp3, "rb") as arqMp3:
@@ -71,6 +75,7 @@ class DadosMp3(object):
             print("ERRO ao abrir arquivo:", localMp3)
             raise IOError
 
+
 def varrerDir(inicialDir='.', extensao='.mp3'):
     """Varre diretório recursivamente a procura de arquivo com
 extensão solicitada e gera uma lista"""
@@ -83,56 +88,62 @@ extensão solicitada e gera uma lista"""
                     listaArquivos.append(arquivoFull)
     return listaArquivos
 
+
 def questionar(questao=""):
-    retorno=input(str(questao+" (S/N):"))
+    retorno = input(str(questao + " (S/N):"))
     if retorno.upper()[0] == "S":
         return True
-    else: return False
+    else:
+        return False
 
-def duplicado(dbCursor, dbTable,  valor, coluna, colunaConsulta="",
-                 mostrarValores=False):
+
+def duplicado(dbCursor, dbTable, valor, coluna, colunaConsulta="",
+              mostrarValores=False):
     """Retorna valor booleano na verificação de valor já existente."""
 
     if colunaConsulta == "": colunaConsulta = coluna
 
-    sql=str('select "'+coluna+'" from "'+dbTable+'" where "'+
-            colunaConsulta+'" = "'+valor+'"')
+    sql = str('select "' + coluna + '" from "' + dbTable + '" where "' +
+              colunaConsulta + '" = "' + valor + '"')
 
     try:
-        resultado=dbCursor.execute(sql)
+        resultado = dbCursor.execute(sql)
         if mostrarValores:
             return resultado.fetchall()
         else:
-            if resultado.fetchone(): return True
-            else: return False
+            if resultado.fetchone():
+                return True
+            else:
+                return False
 
     except Exception as e:
         print("Erro em consulta:", sql, [coluna, colunaConsulta, valor], "//", e)
         raise RuntimeError
+
 
 def main(banco=sqlite3.connect):
     dbcursor = banco.cursor()
     tbComputador = str(os.uname().nodename + "_v1.0")
 
     sql = str('CREATE TABLE if not exists "' + tbComputador +
-              '"(arquivo TEXT, basename TEXT, hash TEXT, tamanho INT,'+
+              '"(arquivo TEXT, basename TEXT, hash TEXT, tamanho INT,' +
               'dataAnalise DATE, artista TEXT, musica TEXT, objeto BLOB)')
 
     dbcursor.execute(sql)
     conexaodb.commit()
 
-    if len(sys.argv) >= 2:
-        localVarrer=os.path.abspath(sys.argv[-1])
-        qstVarrerDir=True
+    if [[ len(sys.argv) >= 2 ]]:
+        localVarrer = os.path.abspath(sys.argv[-1])
+        qstVarrerDir = True
     else:
         os.system('cls' if os.name == 'nt' else 'clear')
-        localVarrer=""
+        localVarrer = ""
         qstVarrerDir = questionar("Realizar varredura de \
 diretorio?")
 
     if qstVarrerDir:
-        while [[ not os.path.isdir(localVarrer) and not
-        os.path.exists(localVarrer) ]] or localVarrer=="":
+        while (not os.path.isdir(localVarrer) and not
+        os.path.exists(localVarrer)) or localVarrer == "":
             try:
                 localVarrer = os.path.abspath(
                     input("Diretório para realizar a \
@@ -142,17 +153,17 @@ varredura de arquivos .mp3: "))
                 else:
                     raise IsADirectoryError
             except Exception as e:
-                print("Diretório", localVarrer, "inválido, tente novamente. //",e)
+                print("Diretório", localVarrer, "inválido, tente novamente. //", e)
 
     listaMp3s = varrerDir(localVarrer)
     qntMp3s = len(listaMp3s)
-    qstAnalise = questionar(str("Serão analisados "+str(qntMp3s)+" arquivos, continuar?"))
+    qstAnalise = questionar(str("Serão analisados " + str(qntMp3s) + " arquivos, continuar?"))
     sobreescreverTodos = False
 
     if qstAnalise:
         i = 0
-        loopCommit=0
-        erroNum=0
+        loopCommit = 0
+        erroNum = 0
         for mp3 in listaMp3s:
             i += 1
             loopCommit += 1
@@ -162,24 +173,24 @@ varredura de arquivos .mp3: "))
             sys.stdout.flush()
 
             try:
-                dadosMp3=DadosMp3(mp3)
+                dadosMp3 = DadosMp3(mp3)
                 pickleMp3 = pickle.dumps(dadosMp3)
             except Exception as e:
-                print("Erro ao analisar",mp3, "//", e)
+                print("Erro ao analisar", mp3, "//", e)
                 erroNum += 1
-                if [[ erroNum >= 5 ]]:
-                    print("ERRO1: Muitos erros durante análise. Processo abortado.")
+                if [[erroNum >= 5]]:
+                    print("ERRO(1): Muitos erros durante análise. Processo abortado.")
                     raise RuntimeError
 
             try:
-                sql=""
-                if duplicado(dbcursor, tbComputador,  dadosMp3.localMp3, "arquivo"):
+                sql = ""
+                if duplicado(dbcursor, tbComputador, dadosMp3.localMp3, "arquivo"):
                     if not sobreescreverTodos:
                         print("")
-                        qstSobreescrever=questionar(str("Arquivo "+str(mp3)+" já existente no banco, "+
-                                                        "sobreescrever informações?"))
+                        qstSobreescrever = questionar(str("Arquivo " + str(mp3) + " já existente no banco, " +
+                                                          "sobreescrever informações?"))
                         if qstSobreescrever:
-                            sobreescreverTodos=questionar("Sobreescrever em todos duplicados?")
+                            sobreescreverTodos = questionar("Sobreescrever em todos duplicados?")
                         else:
                             print("Análise interrompida.")
                             break
@@ -193,22 +204,21 @@ varredura de arquivos .mp3: "))
                               "tamanho, dataAnalise, artista, musica, objeto)" +
                               " values (?, ?, ?, ?, ?, ?, ?, ?)")
 
-                sqlValues=[dadosMp3.localMp3, dadosMp3.basename, dadosMp3.hash,
-                           dadosMp3.bytes, dadosMp3.dataAnalise, dadosMp3.artista,
-                           dadosMp3.titulo, pickleMp3]
+                sqlValues = [dadosMp3.localMp3, dadosMp3.basename, dadosMp3.hash,
+                             dadosMp3.bytes, dadosMp3.dataAnalise, dadosMp3.artista,
+                             dadosMp3.titulo, pickleMp3]
 
                 dbcursor.execute(sql, sqlValues)
 
-                if [[loopCommit >= 50 | i == tamListaMp3]]:
+                if [[loopCommit >= 50 | i >= qntMp3s]]:
                     conexaodb.commit()
                     loopCommit = 0
             except Exception as e:
-                print("Erro ao gravar informações em banco de", dadosMp3.localMp3)
+                print("Erro ao gravar informações em banco de", dadosMp3.localMp3, "//", e)
                 erroNum += 1
-                if [[ erroNum >= 5 ]]:
-                    print("ERRO2: Muitos erros durante análise. Processo abortado.")
+                if [[erroNum >= 5]]:
+                    print("ERRO(2): Muitos erros durante análise. Processo abortado.")
                     raise RuntimeError
-
 
 
 if __name__ == '__main__':
