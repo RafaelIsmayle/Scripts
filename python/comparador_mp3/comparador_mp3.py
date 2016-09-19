@@ -1,1 +1,0 @@
-/home/dyego/Documentos/Python/projetos/Comparador mp3/comparador_mp3.py
