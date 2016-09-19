@@ -124,41 +124,8 @@ def menuComparar():
     # verificar index?
     pass
 
-def main(banco=sqlite3.connect):
-    dbcursor = banco.cursor()
-    tbComputador = str(os.uname().nodename + "_v1.0")
-
-    sql = str('CREATE TABLE if not exists "' + tbComputador +
-              '"(arquivo TEXT, basename TEXT, hash TEXT, tamanho INT,' +
-              'dataAnalise DATE, artista TEXT, musica TEXT, objeto BLOB)')
-
-    dbcursor.execute(sql)
-    conexaodb.commit()
-
-    if [[ len(sys.argv) >= 2 ]]:
-        localVarrer = os.path.abspath(sys.argv[-1])
-        qstVarrerDir = True
-    else:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        localVarrer = ""
-        qstVarrerDir = questionar("Realizar varredura de \
-diretorio?")
-        qstCompararTbs = questionar("Comparar dados de computadores diferentes?")
-
-    if qstVarrerDir:
-        while (not os.path.isdir(localVarrer) and not
-        os.path.exists(localVarrer)) or localVarrer == "":
-            try:
-                localVarrer = os.path.abspath(
-                    input("Diretório para realizar a \
-varredura de arquivos .mp3: "))
-                if os.path.isdir(localVarrer):
-                    break
-                else:
-                    raise IsADirectoryError
-            except Exception as e:
-                print("Diretório", localVarrer, "inválido, tente novamente. //", e)
-
+def acaoVarrer(dbCursor, localVarrer, listaMp3s):
+    dbcursor = dbCursor
     listaMp3s = varrerDir(localVarrer)
     qntMp3s = len(listaMp3s)
     qstAnalise = questionar(str("Serão analisados " + str(qntMp3s) + " arquivos, continuar?"))
@@ -223,6 +190,43 @@ varredura de arquivos .mp3: "))
                 if [[erroNum >= 5]]:
                     print("ERRO(2): Muitos erros durante análise. Processo abortado.")
                     raise RuntimeError
+
+def main(banco=sqlite3.connect):
+    dbcursor = banco.cursor()
+    tbComputador = str(os.uname().nodename + "_v1.0")
+
+    sql = str('CREATE TABLE if not exists "' + tbComputador +
+              '"(arquivo TEXT, basename TEXT, hash TEXT, tamanho INT,' +
+              'dataAnalise DATE, artista TEXT, musica TEXT, objeto BLOB)')
+
+    dbcursor.execute(sql)
+    conexaodb.commit()
+
+    if [[ len(sys.argv) >= 2 ]]:
+        localVarrer = os.path.abspath(sys.argv[-1])
+        qstVarrerDir = True
+    else:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        localVarrer = ""
+        qstVarrerDir = questionar("Realizar varredura de \
+diretorio?")
+        qstCompararPCs = questionar("Comparar dados de computadores diferentes?")
+
+    if qstVarrerDir:
+        while (not os.path.isdir(localVarrer) and not
+        os.path.exists(localVarrer)) or localVarrer == "":
+            try:
+                localVarrer = os.path.abspath(
+                    input("Diretório para realizar a \
+varredura de arquivos .mp3: "))
+                if os.path.isdir(localVarrer):
+                    break
+                else:
+                    raise IsADirectoryError
+            except Exception as e:
+                print("Diretório", localVarrer, "inválido, tente novamente. //", e)
+
+
 
 
 if __name__ == '__main__':
