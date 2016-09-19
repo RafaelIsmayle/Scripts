@@ -124,7 +124,7 @@ def menuComparar():
     # verificar index?
     pass
 
-def acaoVarrer(dbCursor, localVarrer, listaMp3s):
+def acaoVarrer(dbCursor, localVarrer):
     dbcursor = dbCursor
     listaMp3s = varrerDir(localVarrer)
     qntMp3s = len(listaMp3s)
@@ -225,6 +225,7 @@ varredura de arquivos .mp3: "))
                     raise IsADirectoryError
             except Exception as e:
                 print("Diretório", localVarrer, "inválido, tente novamente. //", e)
+        acaoVarrer(dbcursor, localVarrer, listaMp3s)
 
 
 
