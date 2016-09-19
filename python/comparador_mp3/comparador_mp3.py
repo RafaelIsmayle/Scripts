@@ -143,6 +143,7 @@ def main(banco=sqlite3.connect):
         localVarrer = ""
         qstVarrerDir = questionar("Realizar varredura de \
 diretorio?")
+        qstCompararTbs = questionar("Comparar dados de computadores diferentes?")
 
     if qstVarrerDir:
         while (not os.path.isdir(localVarrer) and not
