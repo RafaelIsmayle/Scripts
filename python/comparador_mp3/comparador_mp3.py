@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Criado por Dyego (dyegomb.wordpress.com)
 #
-#
 import os, taglib, pickle, sqlite3
 from hashlib import md5
 from datetime import datetime
@@ -120,6 +119,10 @@ def duplicado(dbCursor, dbTable, valor, coluna, colunaConsulta="",
         print("Erro em consulta:", sql, [coluna, colunaConsulta, valor], "//", e)
         raise RuntimeError
 
+def menuComparar():
+    # Analisar por hash, comparar artista e musica (trazer album tamanho, etc.)
+    # verificar index?
+    pass
 
 def main(banco=sqlite3.connect):
     dbcursor = banco.cursor()
