@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Criado por Dyego (dyegomb.wordpress.com)
-# Teste
+#
 #
 import os, taglib, pickle, sqlite3
 from hashlib import md5
