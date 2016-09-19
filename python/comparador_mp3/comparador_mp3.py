@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Criado por Dyego (dyegomb.wordpress.com) 2016/09/19
 import os, taglib, pickle, sqlite3
 from hashlib import md5
 from datetime import datetime
