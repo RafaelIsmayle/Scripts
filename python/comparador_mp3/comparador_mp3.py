@@ -182,7 +182,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                 dbcursor.execute(sql, sqlValues)
 
                 if loopCommit >= 50 or i >= qntMp3s :
-                    print("| Commit")
+                    #print("| Commit")
                     conexaodb.commit()
                     loopCommit = 0
             except Exception as e:
