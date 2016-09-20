@@ -227,6 +227,9 @@ varredura de arquivos .mp3: "))
                 print("Diretório", localVarrer, "inválido, tente novamente. //", e)
         acaoVarrer(dbcursor, localVarrer, tbComputador)
 
+    if qstCompararPCs:
+        
+
 
 
 
