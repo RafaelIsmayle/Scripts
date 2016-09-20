@@ -229,6 +229,7 @@ varredura de arquivos .mp3: "))
         acaoVarrer(dbcursor, localVarrer, tbComputador)
 
     if qstCompararPCs:
+        pass
 
 
 
