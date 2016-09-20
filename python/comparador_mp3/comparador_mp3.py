@@ -149,7 +149,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
             except Exception as e:
                 print("Erro ao analisar", mp3, "//", e)
                 erroNum += 1
-                if [[ erroNum >= 5 ]]:
+                if erroNum >= 5 :
                     print("ERRO(1): Muitos erros durante análise. Processo abortado.")
                     raise RuntimeError
 
@@ -181,7 +181,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
 
                 dbcursor.execute(sql, sqlValues)
 
-                if [[loopCommit >= 50 | i >= qntMp3s]]:
+                if [[ loopCommit >= 50 | i >= qntMp3s ]]:
                     conexaodb.commit()
                     loopCommit = 0
             except Exception as e:
