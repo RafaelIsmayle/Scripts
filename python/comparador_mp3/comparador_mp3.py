@@ -191,7 +191,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                     print("ERRO(2): Muitos erros(", erroNum, ") durante análise. Processo abortado.")
                     raise RuntimeError
 
-def main(banco=sqlite3.connect):
+def main(banco=sqlite3.connect("dados.db")):
     dbcursor = banco.cursor()
     tbComputador = str(os.uname().nodename + "_v1.0")
 
