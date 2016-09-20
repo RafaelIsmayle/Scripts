@@ -205,6 +205,7 @@ def main(banco=sqlite3.connect("dados.db")):
     if [[ len(sys.argv) >= 2 ]]:
         localVarrer = os.path.abspath(sys.argv[-1])
         qstVarrerDir = True
+        qstCompararPCs = False
     else:
         os.system('cls' if os.name == 'nt' else 'clear')
         localVarrer = ""
