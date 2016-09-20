@@ -201,7 +201,7 @@ def main(banco=sqlite3.connect("dados.db")):
 
     dbcursor.execute(sql)
     conexaodb.commit()
-
+    
     if [[ len(sys.argv) >= 2 ]]:
         localVarrer = os.path.abspath(sys.argv[-1])
         qstVarrerDir = True
