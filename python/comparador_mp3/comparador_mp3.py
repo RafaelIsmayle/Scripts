@@ -188,7 +188,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
             except Exception as e:
                 print("Erro ao gravar informações em banco de", dadosMp3.localMp3, "//", e)
                 erroNum += 1
-                if [[ erroNum >= 5 ]]:
+                if erroNum >= 5 :
                     print("ERRO(2): Muitos erros(", erroNum, ") durante análise. Processo abortado.")
                     raise RuntimeError
 
