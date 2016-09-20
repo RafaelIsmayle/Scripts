@@ -225,10 +225,11 @@ varredura de arquivos .mp3: "))
                     raise IsADirectoryError
             except Exception as e:
                 print("Diretório", localVarrer, "inválido, tente novamente. //", e)
+
         acaoVarrer(dbcursor, localVarrer, tbComputador)
 
     if qstCompararPCs:
-        
+
 
 
 
