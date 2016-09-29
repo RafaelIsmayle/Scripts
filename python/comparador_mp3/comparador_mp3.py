@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#
 # Criado por Dyego (dyegomb.wordpress.com)
 #
 import os, taglib, pickle, sqlite3
@@ -17,27 +18,13 @@ class DadosMp3(object):
         try:
             self.hash = self.geraHash(self.localMp3)
         except Exception as e:
-            print("ERRO ao gerar md5 hash para o arquivo:", self.localMp3, e)
+            print("ERRO ao gerar md5 hash para o arquivo:", self.localMp3,
+                  e)
             raise IOError
-
-        try:
-            self.coletarDados(self.localMp3)
-        except Exception as erro:
-            print("Erro ao coletar dados da TAG:", erro)
 
         self.bytes = os.path.getsize(self.localMp3)
 
-    def __repr__(self):
-        """Retorna informações do mp3 em JSON"""
-        data = str(self.dataAnalise[2]) + "/" + str(self.dataAnalise[1]) + "/" + str(self.dataAnalise[0])
-        jsonDados = str("[{'artista':'" + self.artista + "'}," +
-                        "{'album':'" + self.album + "'}," +
-                        "{'hash':'" + self.hash + "'}," +
-                        "{'bytes':'" + str(self.bytes) + "'}," +
-                        "{'data de analise':'" + data + "'}]")
-        return str(jsonDados)
-
-    def coletarDados(self, localMp3):
+        # Capturar informações da TAG
         dados = taglib.File(localMp3)
         try:
             self.artista = dados.tags['ARTIST'][0]
@@ -55,6 +42,40 @@ class DadosMp3(object):
             self.allTags = dados.tags
         except Exception:
             pass
+
+        self.index = 7
+        self.lista = [self.artista, self.titulo, self.album, self.hash,
+                 self.dataAnalise, self.localHost, self.bytes]
+
+
+    def __iter__(self):
+        #return self # executa o loop for apenas uma vez
+        return iter(self.lista)
+
+
+    def __next__(self):
+        if self.index == 0:
+            raise StopIteration
+        self.index = self.index - 1
+        return self.lista[self.index]
+
+
+    def __getitem__(self, key):
+        dicionario = {'artista': self.artista, 'título': self.titulo,
+        'albúm': self.album, 'hash':self.hash, 'tamanho': self.bytes}
+        return dicionario[key]
+        #return self.lista[index]
+
+
+    def __repr__(self):
+        """Retorna informações do mp3 em JSON"""
+        data = str(self.dataAnalise[2]) + "/" + str(self.dataAnalise[1]) + "/" + str(self.dataAnalise[0])
+        jsonDados = str("[{'artista':'" + self.artista + "'}," +
+                        "{'album':'" + self.album + "'}," +
+                        "{'hash':'" + self.hash + "'}," +
+                        "{'bytes':'" + str(self.bytes) + "'}," +
+                        "{'data de analise':'" + data + "'}]")
+        return str(jsonDados)
 
     @staticmethod
     def geraHash(localMp3):
@@ -119,10 +140,30 @@ def duplicado(dbCursor, dbTable, valor, coluna, colunaConsulta="",
         print("Erro em consulta:", sql, [coluna, colunaConsulta, valor], "//", e)
         raise RuntimeError
 
+
 def menuComparar():
     # Analisar por hash, comparar artista e musica (trazer album tamanho, etc.)
     # verificar index?
-    pass
+    menu = """
+    ====== Comparações ======
+
+    1 - Verificar hashes duplicados em mesma tabela;
+    2 - Verificar hashes duplicados em tabelas diferentes;
+    3 - Verificar mp3 com Artista e Música duplicados em mesma tabela;
+    4 - Verificar mp3 com Artista e Música duplicados tabelas diferentes;
+
+    0 - SAIR.
+    """
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(menu)
+        sys.stdout.write("    Opção: ")
+        opcao = input()
+        if opcao in ["1", 1]: return 1
+        elif opcao in ["2", 2]: return 2
+        elif opcao in ["0", 0]: break
+        else: continue
+
 
 def acaoVarrer(dbCursor, localVarrer, tbComputador):
     dbcursor = dbCursor
@@ -162,9 +203,9 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                                                           "sobreescrever informações?"))
                         if qstSobreescrever:
                             sobreescreverTodos = questionar("Sobreescrever em todos duplicados?")
-                        else:
-                            print("Análise interrompida.")
-                            break
+                        #else:
+                        #    print("Análise interrompida.")
+                        #    break
 
                     if sobreescreverTodos or qstSobreescrever:
                         sql = str('UPDATE "' + tbComputador + '" SET arquivo = ?, basename = ?, hash = ?, ' +
@@ -182,7 +223,6 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                 dbcursor.execute(sql, sqlValues)
 
                 if loopCommit >= 50 or i >= qntMp3s :
-                    #print("| Commit")
                     conexaodb.commit()
                     loopCommit = 0
             except Exception as e:
@@ -191,6 +231,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                 if erroNum >= 5 :
                     print("ERRO(2): Muitos erros(", erroNum, ") durante análise. Processo abortado.")
                     raise RuntimeError
+
 
 def main(banco=sqlite3.connect("dados.db")):
     dbcursor = banco.cursor()
@@ -202,7 +243,6 @@ def main(banco=sqlite3.connect("dados.db")):
 
     dbcursor.execute(sql)
     conexaodb.commit()
-    print(len(sys.argv))
 
     if len(sys.argv) >= 2 :
         localVarrer = os.path.abspath(sys.argv[-1])
@@ -232,9 +272,7 @@ varredura de arquivos .mp3: "))
         acaoVarrer(dbcursor, localVarrer, tbComputador)
 
     if qstCompararPCs:
-        pass
-
-
+        optComparar = menuComparar()
 
 
 
