@@ -15,6 +15,7 @@ class DadosMp3(object):
         self.localHost = os.uname().nodename
         self.dataAnalise = datetime.now()
         self.basename = os.path.basename(localMp3)
+        self.dataModificado = datetime.fromtimestamp(os.path.getmtime(localMp3))
         try:
             self.hash = self.geraHash(self.localMp3)
         except Exception as e:
@@ -190,6 +191,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
             except Exception as e:
                 print("Erro ao analisar", mp3, "//", e)
                 erroNum += 1
+                pickleMp3 = ""
                 if erroNum >= 5 :
                     print("ERRO(1): Muitos erros durante análise. Processo abortado.")
                     raise RuntimeError
@@ -197,6 +199,7 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
             try:
                 sql = ""
                 if duplicado(dbcursor, tbComputador, dadosMp3.localMp3, "arquivo"):
+                    qstSobreescrever = False
                     if not sobreescreverTodos:
                         print("")
                         qstSobreescrever = questionar(str("Arquivo " + str(mp3) + " já existente no banco, " +
@@ -213,12 +216,12 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                                   'WHERE "arquivo" = "' + dadosMp3.localMp3 + '"')
                 if not sql:
                     sql = str('insert into "' + tbComputador + '"(arquivo, basename, hash, ' +
-                              "tamanho, dataAnalise, artista, musica, objeto)" +
-                              " values (?, ?, ?, ?, ?, ?, ?, ?)")
+                              "tamanho, dataAnalise, artista, musica, objeto, dataModificado)" +
+                              " values (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
                 sqlValues = [dadosMp3.localMp3, dadosMp3.basename, dadosMp3.hash,
                              dadosMp3.bytes, dadosMp3.dataAnalise, dadosMp3.artista,
-                             dadosMp3.titulo, pickleMp3]
+                             dadosMp3.titulo, pickleMp3, dadosMp3.dataModificado]
 
                 dbcursor.execute(sql, sqlValues)
 
@@ -239,7 +242,7 @@ def main(banco=sqlite3.connect("dados.db")):
 
     sql = str('CREATE TABLE if not exists "' + tbComputador +
               '"(arquivo TEXT, basename TEXT, hash TEXT, tamanho INT,' +
-              'dataAnalise DATE, artista TEXT, musica TEXT, objeto BLOB)')
+              'dataAnalise DATE, dataModificado DATE, artista TEXT, musica TEXT, objeto BLOB)')
 
     dbcursor.execute(sql)
     conexaodb.commit()
