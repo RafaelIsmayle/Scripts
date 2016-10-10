@@ -119,20 +119,35 @@ def questionar(questao=""):
 
 
 def duplicado(dbCursor, dbTable, valor, coluna, colunaConsulta="",
-              mostrarValores=False):
+              mostrarValores=False, dbTable2=""):
     """Retorna valor booleano na verificação de valor já existente."""
 
     if colunaConsulta == "": colunaConsulta = coluna
 
-    sql = str('select "' + coluna + '" from "' + dbTable + '" where "' +
+    if dbTable = dbTable2:
+        sql = str('select "' + coluna + '", ROWID from "' + dbTable + '" where "' +
+                  colunaConsulta + '" = "' + valor + '"')
+    else:
+        sql = str('select "' + coluna + '" from "' + dbTable + '" where "' +
               colunaConsulta + '" = "' + valor + '"')
+    # Como pegar tb o ROWID ??
+
+    if dbTable2:
+        sql2 = str('select "' + coluna + '" from "' + dbTable2 + '" where "' +
+                  colunaConsulta + '" = "' + valor + '"')
+    else: sql2 = False
 
     try:
         resultado = dbCursor.execute(sql)
+        if sql2: resultado2 = dbCursor.execute(sql2)
+        else resultado2 = False
+
         if mostrarValores:
             return resultado.fetchall()
         else:
-            if resultado.fetchone():
+            if resultado.fetchone() = resultado2.fetchone():
+                return True
+            elif resultado.fetchone():
                 return True
             else:
                 return False
@@ -162,6 +177,8 @@ def menuComparar():
         opcao = input()
         if opcao in ["1", 1]: return 1
         elif opcao in ["2", 2]: return 2
+        elif opcao in ["3", 3]: return 3
+        elif opcao in ["4", 4]: return 4
         elif opcao in ["0", 0]: break
         else: continue
 
