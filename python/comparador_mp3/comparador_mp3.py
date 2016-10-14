@@ -3,56 +3,69 @@
 # Criado por Dyego (dyegomb.wordpress.com)
 #
 import os, taglib, pickle, sqlite3
-from hashlib import md5
+from acoustid import fingerprint_file
+#from hashlib import md5
 from datetime import datetime
 
 
 class DadosMp3(object):
-    """Gera e coleta dados de arquivos mp3"""
+    """Gera e coleta dados de arquivos mp3 ou banco SQLite"""
 
     def __init__(self, localMp3):
-        self.localMp3 = os.path.abspath(localMp3)
-        self.localHost = os.uname().nodename
-        self.dataAnalise = datetime.now()
-        self.basename = os.path.basename(localMp3)
-        self.dataModificado = datetime.fromtimestamp(os.path.getmtime(localMp3))
-        try:
-            self.hash = self.geraHash(self.localMp3)
-        except Exception as e:
-            print("ERRO ao gerar md5 hash para o arquivo:", self.localMp3,
-                  e)
-            raise IOError
+        if type(localMp3) == str and os.path.isfile(localMp3):
+            self.localMp3 = os.path.abspath(localMp3)
+            self.localHost = os.uname().nodename
+            self.dataAnalise = datetime.now()
+            self.basename = os.path.basename(localMp3)
+            self.dataModificado = datetime.fromtimestamp(os.path.getmtime(localMp3))
+            try:
+                self.tempo, self.fingerprint = self.geraFingerprint(self.localMp3)
+            except Exception as e:
+                print("ERRO ao gerar fingerprint para o arquivo:", self.localMp3,
+                      e)
+                raise IOError
 
-        self.bytes = os.path.getsize(self.localMp3)
+            self.bytes = os.path.getsize(self.localMp3)
 
-        # Capturar informações da TAG
-        dados = taglib.File(localMp3)
-        try:
-            self.artista = dados.tags['ARTIST'][0]
-        except KeyError:
-            self.artista = "DESCONHECIDO"
-        try:
-            self.album = dados.tags['ALBUM'][0]
-        except KeyError:
-            self.album = "DESCONHECIDO"
-        try:
-            self.titulo = dados.tags['TITLE'][0]
-        except KeyError:
-            self.titulo = "DESCONHECIDO"
-        try:
-            self.allTags = dados.tags
-        except Exception:
-            pass
+            # Capturar informações da TAG
+            dados = taglib.File(localMp3)
+            try:
+                self.artista = dados.tags['ARTIST'][0]
+            except KeyError:
+                self.artista = "DESCONHECIDO"
+            try:
+                self.album = dados.tags['ALBUM'][0]
+            except KeyError:
+                self.album = "DESCONHECIDO"
+            try:
+                self.titulo = dados.tags['TITLE'][0]
+            except KeyError:
+                self.titulo = "DESCONHECIDO"
+            try:
+                self.allTags = dados.tags
+            except Exception:
+                pass
 
-        self.index = 7
-        self.lista = [self.artista, self.titulo, self.album, self.hash,
-                 self.dataAnalise, self.localHost, self.bytes]
+
+
+        #elif type(localMp3) == "sqlite3.Cursor":
+        else:
+            #http://stackoverflow.com/questions/2466191/set-attributes-from-dictionary-in-python
+            try:
+                for coluna, dado in zip(localMp3.description, localMp3.fetchone()):
+                    setattr(self, coluna[0], dado)
+            except Exception as e:
+                print("ERRO durante \"parse\" em select :", e)
+                raise EOFError
+
+        self.lista = [self.artista, self.titulo, self.album, self.fingerprint,
+                      self.dataAnalise, self.localHost, self.bytes]
+        self.index = len(self.lista)
 
 
     def __iter__(self):
-        #return self # executa o loop for apenas uma vez
+        # return self # executa o loop for apenas uma vez
         return iter(self.lista)
-
 
     def __next__(self):
         if self.index == 0:
@@ -60,37 +73,37 @@ class DadosMp3(object):
         self.index = self.index - 1
         return self.lista[self.index]
 
-
     def __getitem__(self, key):
         dicionario = {'artista': self.artista, 'título': self.titulo,
-        'albúm': self.album, 'hash':self.hash, 'tamanho': self.bytes}
+                      'albúm': self.album, 'fingerprint': self.fingerprint, 'tamanho': self.bytes}
         return dicionario[key]
-        #return self.lista[index]
-
+        # return self.lista[index]
 
     def __repr__(self):
         """Retorna informações do mp3 em JSON"""
         data = str(self.dataAnalise[2]) + "/" + str(self.dataAnalise[1]) + "/" + str(self.dataAnalise[0])
         jsonDados = str("[{'artista':'" + self.artista + "'}," +
                         "{'album':'" + self.album + "'}," +
-                        "{'hash':'" + self.hash + "'}," +
+                        "{'fingerprint':'" + self.fingerprint + "'}," +
                         "{'bytes':'" + str(self.bytes) + "'}," +
                         "{'data de analise':'" + data + "'}]")
         return str(jsonDados)
 
     @staticmethod
-    def geraHash(localMp3):
+    def geraFingerprint(localMp3):
         try:
-            calculador = md5()
-            with open(localMp3, "rb") as arqMp3:
-                # for parte in iter(partial(arqMp3.read, 4096), b''):
-                while True:
-                    parte = arqMp3.read(4096)
-                    if not parte: break
-
-                    calculador.update(parte)
-
-            return calculador.hexdigest()
+            #calculador = md5()
+            #with open(localMp3, "rb") as arqMp3:
+            #    # for parte in iter(partial(arqMp3.read, 4096), b''):
+            #    while True:
+            #        parte = arqMp3.read(4096)
+            #        if not parte: break
+            #
+            #        calculador.update(parte)
+            #
+            #return calculador.hexdigest()
+            arqTempoFingerprint = fingerprint_file(localMp3)
+            return arqTempoFingerprint
 
         except IOError:
             print("ERRO ao abrir arquivo:", localMp3)
@@ -118,36 +131,43 @@ def questionar(questao=""):
         return False
 
 
+# noinspection PyTypeChecker
 def duplicado(dbCursor, dbTable, valor, coluna, colunaConsulta="",
-              mostrarValores=False, dbTable2=""):
+              mostrarValores=False, dbTable2="", seJaExistente=False):
     """Retorna valor booleano na verificação de valor já existente."""
 
     if colunaConsulta == "": colunaConsulta = coluna
 
-    if dbTable = dbTable2:
+    if not dbTable: return
+
+    if dbTable == dbTable2:
         sql = str('select "' + coluna + '", ROWID from "' + dbTable + '" where "' +
                   colunaConsulta + '" = "' + valor + '"')
     else:
-        sql = str('select "' + coluna + '" from "' + dbTable + '" where "' +
-              colunaConsulta + '" = "' + valor + '"')
+        sql = str('select "' + coluna + '", ROWID from "' + dbTable + '" where "' +
+                  colunaConsulta + '" = "' + valor + '"')
     # Como pegar tb o ROWID ??
 
+    dir(sql)
+
     if dbTable2:
-        sql2 = str('select "' + coluna + '" from "' + dbTable2 + '" where "' +
-                  colunaConsulta + '" = "' + valor + '"')
-    else: sql2 = False
+        sql2 = str('select "' + coluna + '", ROWID from "' + dbTable2 + '" where "' +
+                   colunaConsulta + '" = "' + valor + '"')
+    else:
+        sql2 = False
 
     try:
         resultado = dbCursor.execute(sql)
-        if sql2: resultado2 = dbCursor.execute(sql2)
-        else resultado2 = False
+        if sql2:
+            resultado2 = dbCursor.execute(sql2)
+        else: resultado2 = False
 
         if mostrarValores:
             return resultado.fetchall()
         else:
-            if resultado.fetchone() = resultado2.fetchone():
-                return True
-            elif resultado.fetchone():
+            if seJaExistente:
+                if resultado.fetchone(): return True
+            elif resultado.fetchone() == resultado2.fetchone():
                 return True
             else:
                 return False
@@ -158,13 +178,13 @@ def duplicado(dbCursor, dbTable, valor, coluna, colunaConsulta="",
 
 
 def menuComparar():
-    # Analisar por hash, comparar artista e musica (trazer album tamanho, etc.)
+    # Analisar por fingerprint, comparar artista e musica (trazer album tamanho, etc.)
     # verificar index?
     menu = """
     ====== Comparações ======
 
-    1 - Verificar hashes duplicados em mesma tabela;
-    2 - Verificar hashes duplicados em tabelas diferentes;
+    1 - Verificar fingerprints duplicados em mesma tabela;
+    2 - Verificar fingerprints duplicados em tabelas diferentes;
     3 - Verificar mp3 com Artista e Música duplicados em mesma tabela;
     4 - Verificar mp3 com Artista e Música duplicados tabelas diferentes;
 
@@ -175,12 +195,18 @@ def menuComparar():
         print(menu)
         sys.stdout.write("    Opção: ")
         opcao = input()
-        if opcao in ["1", 1]: return 1
-        elif opcao in ["2", 2]: return 2
-        elif opcao in ["3", 3]: return 3
-        elif opcao in ["4", 4]: return 4
-        elif opcao in ["0", 0]: break
-        else: continue
+        if opcao in ["1", 1]:
+            return 1
+        elif opcao in ["2", 2]:
+            return 2
+        elif opcao in ["3", 3]:
+            return 3
+        elif opcao in ["4", 4]:
+            return 4
+        elif opcao in ["0", 0]:
+            break
+        else:
+            continue
 
 
 def acaoVarrer(dbCursor, localVarrer, tbComputador):
@@ -206,16 +232,17 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                 dadosMp3 = DadosMp3(mp3)
                 pickleMp3 = pickle.dumps(dadosMp3)
             except Exception as e:
+                dadosMp3 = DadosMp3(mp3)
                 print("Erro ao analisar", mp3, "//", e)
                 erroNum += 1
                 pickleMp3 = ""
-                if erroNum >= 5 :
+                if erroNum >= 5:
                     print("ERRO(1): Muitos erros durante análise. Processo abortado.")
                     raise RuntimeError
 
             try:
                 sql = ""
-                if duplicado(dbcursor, tbComputador, dadosMp3.localMp3, "arquivo"):
+                if duplicado(dbcursor, tbComputador, dadosMp3.localMp3, "arquivo", seJaExistente=True):
                     qstSobreescrever = False
                     if not sobreescreverTodos:
                         print("")
@@ -223,34 +250,36 @@ def acaoVarrer(dbCursor, localVarrer, tbComputador):
                                                           "sobreescrever informações?"))
                         if qstSobreescrever:
                             sobreescreverTodos = questionar("Sobreescrever em todos duplicados?")
-                        #else:
-                        #    print("Análise interrompida.")
-                        #    break
+                            # else:
+                            #    print("Análise interrompida.")
+                            #    break
 
                     if sobreescreverTodos or qstSobreescrever:
-                        sql = str('UPDATE "' + tbComputador + '" SET arquivo = ?, basename = ?, hash = ?, ' +
-                                  'tamanho = ?, dataAnalise = ?, artista = ?, musica = ?, objeto = ? ' +
+                        sql = str('UPDATE "' + tbComputador + '" SET arquivo = ?, basename = ?, fingerprint = ?, ' +
+                                  'tamanho = ?, dataAnalise = ?, artista = ?, musica = ?, objeto = ?,'+
+                                  'dataModificado = ? ' +
                                   'WHERE "arquivo" = "' + dadosMp3.localMp3 + '"')
                 if not sql:
-                    sql = str('insert into "' + tbComputador + '"(arquivo, basename, hash, ' +
-                              "tamanho, dataAnalise, artista, musica, objeto, dataModificado)" +
-                              " values (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                    sql = str('insert into "' + tbComputador + '"(arquivo, basename, fingerprint, ' +
+                              "tamanho, dataAnalise, artista, musica, dataModificado)" +
+                              " values (?, ?, ?, ?, ?, ?, ?, ?)")
 
-                sqlValues = [dadosMp3.localMp3, dadosMp3.basename, dadosMp3.hash,
+                sqlValues = [dadosMp3.localMp3, dadosMp3.basename, dadosMp3.fingerprint,
                              dadosMp3.bytes, dadosMp3.dataAnalise, dadosMp3.artista,
-                             dadosMp3.titulo, pickleMp3, dadosMp3.dataModificado]
+                             dadosMp3.titulo, dadosMp3.dataModificado]
 
                 dbcursor.execute(sql, sqlValues)
 
-                if loopCommit >= 50 or i >= qntMp3s :
+                if loopCommit >= 50 or i >= qntMp3s:
                     conexaodb.commit()
                     loopCommit = 0
             except Exception as e:
                 print("Erro ao gravar informações em banco de", dadosMp3.localMp3, "//", e)
                 erroNum += 1
-                if erroNum >= 5 :
+                if erroNum >= 5:
                     print("ERRO(2): Muitos erros(", erroNum, ") durante análise. Processo abortado.")
                     raise RuntimeError
+        print("")
 
 
 def main(banco=sqlite3.connect("dados.db")):
@@ -258,13 +287,13 @@ def main(banco=sqlite3.connect("dados.db")):
     tbComputador = str(os.uname().nodename + "_v1.0")
 
     sql = str('CREATE TABLE if not exists "' + tbComputador +
-              '"(arquivo TEXT, basename TEXT, hash TEXT, tamanho INT,' +
-              'dataAnalise DATE, dataModificado DATE, artista TEXT, musica TEXT, objeto BLOB)')
+              '"(arquivo TEXT, basename TEXT, fingerprint TEXT, tamanho INT,' +
+              'dataAnalise DATE, dataModificado DATE, artista TEXT, musica TEXT)')
 
     dbcursor.execute(sql)
     conexaodb.commit()
 
-    if len(sys.argv) >= 2 :
+    if len(sys.argv) >= 2:
         localVarrer = os.path.abspath(sys.argv[-1])
         qstVarrerDir = True
         qstCompararPCs = False
@@ -295,7 +324,6 @@ varredura de arquivos .mp3: "))
         optComparar = menuComparar()
 
 
-
 if __name__ == '__main__':
     import sys
 
@@ -308,4 +336,54 @@ if __name__ == '__main__':
         main(conexaodb)
     finally:
         conexaodb.commit()
-        conexaodb.close()
+        #conexaodb.close()
+
+
+    ## Testes
+    #from pydub import AudioSegment
+    #tempo, fingerprint = acoustid.fingerprint_file("/home/dyego/Música/Alice in Chains/(2001) Alice in Chains Greatest Hits/Alice in Chains-01-Man in the Box.mp3")
+    #print (tempo, len(fingerprint), fingerprint)
+    #tempo2, fingerprint2 = acoustid.fingerprint_file("/home/dyego/Música/Alice in Chains/(2001) Alice in Chains Greatest Hits/Alice in Chains-01-Man in the Box_3.aiff")
+    #print (tempo2, len(fingerprint2), fingerprint2)
+    #
+    #count = 0
+    #igcount = 0
+    #for i, a in zip(fingerprint2, fingerprint):
+    #    #print (i, a)
+    #    count += 1
+    #    if i == a: igcount += 1
+    #
+    #print((igcount/count)*100)
+    #
+    #print(len(fingerprint),",", len(fingerprint2))
+    #
+    #lista = [fingerprint2[i:i + 5] for i in range(0, len(fingerprint2), 5)]
+    #n=0
+    #for i in lista:
+    #    #print (i)
+    #    if i in fingerprint:
+    #        print("Deu macth", n)
+    #        n += 1
+    #
+    #print (n, "em", len(lista), i)
+    #print (n/len(lista))
+    #
+    #sound = AudioSegment.from_mp3("/home/dyego/Música/Alice in Chains/(2001) Alice in Chains Greatest Hits/Alice in Chains-01-Man in the Box_3.mp3")
+    #parte = sound[30:80]
+    #partes = [sound[i:i + 30] for i in range(0, len(sound), 30)]
+    #print (parte.raw_data)
+    ##teste = acoustid.fingerprint(partes[2], 2, partes)
+    ##print(teste)
+    #
+    #
+    ##from beets import plugins as beets
+
+    dbcursor = conexaodb.cursor()
+    sql = """select * from "conab-dyego_v1.0" where rowid = 5"""
+    resultado = dbcursor.execute(sql)
+    print(type(resultado), resultado)
+    print (dir(dbcursor.execute(sql)))
+
+    teste = DadosMp3(resultado)
+    print(teste.artista)
+    conexaodb.close()
